@@ -1,0 +1,158 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model School {
+  id              String            @id @default(cuid())
+  name            String
+  location        String
+  motto           String?
+  users           User[]
+  newsPosts       NewsPost[]
+  events          Event[]
+  sportsCodes     SportsCode[]
+  teams           Team[]
+  achievements    Achievement[]
+  clubs           Club[]
+  staffMembers    StaffMember[]
+  mediaAssets     MediaAsset[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  passwordHash   String
+  role          Role      @default(EDITOR)
+  schoolId      String
+  school        School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  authoredNews  NewsPost[] @relation("NewsAuthor")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+enum Role {
+  PRINCIPAL
+  ADMIN
+  SPORTS_COORDINATOR
+  EDITOR
+}
+
+model NewsPost {
+  id              String   @id @default(cuid())
+  schoolId        String
+  school          School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  authorId        String?
+  author          User?    @relation("NewsAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  title           String
+  slug            String   @unique
+  excerpt         String?
+  body            String
+  category        String?
+  featuredImageUrl String?
+  publishedAt     DateTime?
+  isPublished     Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([schoolId, publishedAt])
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  schoolId    String
+  school      School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime?
+  location    String?
+  category    String?
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([schoolId, startDate])
+}
+
+model SportsCode {
+  id          String   @id @default(cuid())
+  schoolId    String
+  school      School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  teams       Team[]
+  createdAt   DateTime @default(now())
+
+  @@unique([schoolId, name])
+}
+
+model Team {
+  id           String     @id @default(cuid())
+  schoolId     String
+  school       School     @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  sportsCodeId String
+  sportsCode   SportsCode @relation(fields: [sportsCodeId], references: [id], onDelete: Cascade)
+  name         String
+  ageGroup     String?
+  gender       String?
+  createdAt    DateTime   @default(now())
+
+  @@index([schoolId, sportsCodeId])
+}
+
+model Achievement {
+  id                String   @id @default(cuid())
+  schoolId          String
+  school            School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  title             String
+  description       String
+  learnerName       String?
+  category          String?
+  featuredImageUrl  String?
+  isPublished       Boolean  @default(false)
+  createdAt         DateTime @default(now())
+}
+
+model Club {
+  id          String   @id @default(cuid())
+  schoolId    String
+  school      School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  category    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model StaffMember {
+  id         String   @id @default(cuid())
+  schoolId   String
+  school     School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  fullName   String
+  role       String?
+  department String?
+  bio        String?
+  photoUrl   String?
+  email      String?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+}
+
+model MediaAsset {
+  id           String   @id @default(cuid())
+  schoolId     String
+  school       School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  fileName     String
+  url          String
+  altText      String?
+  category     String?
+  createdAt    DateTime @default(now())
+}
